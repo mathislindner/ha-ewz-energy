@@ -1,0 +1,13 @@
+{
+  "domain": "ewz_energy",
+  "name": "ewz Energy",
+  "codeowners": ["@mathislindner"],
+  "config_flow": true,
+  "dependencies": ["recorder"],
+  "documentation": "https://github.com/mathislindner/ha-ewz-energy",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/mathislindner/ha-ewz-energy/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

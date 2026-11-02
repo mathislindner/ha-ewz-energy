@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ewz Netz-Privat Anmeldung",
+        "description": "Melde dich mit der E-Mail-Adresse und dem Passwort von energie.ewz.ch an. Konten, die nur AGOV nutzen, werden nicht unterstützt.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Erneut anmelden",
+        "description": "Das Portal hat das gespeicherte Passwort für {email} abgelehnt.",
+        "data": {
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "E-Mail/Passwort wurde vom Portal abgelehnt (oder das Konto nutzt nur AGOV).",
+      "cannot_connect": "Das ewz-Portal hat nicht rechtzeitig geantwortet. Es ist langsam, bitte erneut versuchen.",
+      "no_lines": "Das Konto hat keine Messpunkte.",
+      "unknown": "Unerwartete Antwort des Portals."
+    },
+    "abort": {
+      "already_configured": "Dieses Konto ist bereits eingerichtet.",
+      "reauth_successful": "Passwort aktualisiert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ewz Energy Optionen",
+        "data": {
+          "scan_interval": "Aktualisierung alle (Minuten)"
+        },
+        "data_description": {
+          "scan_interval": "Das Portal veröffentlicht Werte mit etwa einem Tag Verzögerung, häufiges Abfragen bringt nichts Neues."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_quarter": {
+        "name": "Letzte 15 Minuten"
+      },
+      "last_hour": {
+        "name": "Letzte Stunde"
+      },
+      "today": {
+        "name": "Heute"
+      },
+      "total": {
+        "name": "Total"
+      },
+      "last_data": {
+        "name": "Letzter Messwert"
+      }
+    }
+  },
+  "services": {
+    "import_csv": {
+      "name": "Import CSV",
+      "description": "Import a CSV exported from the ewz portal (semicolon separated) into the stored series and the Energy statistics.",
+      "fields": {
+        "path": {
+          "name": "Path",
+          "description": "File inside the Home Assistant config folder."
+        },
+        "line": {
+          "name": "Line",
+          "description": "Portal name of the line, if the CSV header does not say."
+        }
+      }
+    },
+    "backfill": {
+      "name": "Backfill",
+      "description": "Fetch the last days from the portal again and rebuild the statistics.",
+      "fields": {
+        "days": {
+          "name": "Days",
+          "description": "How many days to fetch."
+        }
+      }
+    }
+  }
+}

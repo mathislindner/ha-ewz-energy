@@ -1,0 +1,59 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ewz Netz-Privat login",
+        "description": "Log in with the e-mail address and password you use on energie.ewz.ch. AGOV-only accounts are not supported.",
+        "data": { "email": "E-mail", "password": "Password" }
+      },
+      "reauth_confirm": {
+        "title": "Log in again",
+        "description": "The ewz portal rejected the saved password for {email}.",
+        "data": { "password": "Password" }
+      }
+    },
+    "error": {
+      "invalid_auth": "The portal rejected this e-mail/password (or the account uses AGOV only).",
+      "cannot_connect": "The ewz portal did not answer in time. It is slow; try again.",
+      "no_lines": "The account has no measuring points.",
+      "unknown": "Unexpected answer from the portal."
+    },
+    "abort": {
+      "already_configured": "This account is already set up.",
+      "reauth_successful": "Password updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ewz Energy options",
+        "data": { "scan_interval": "Refresh every (minutes)" },
+        "data_description": { "scan_interval": "The portal publishes values with about a day of delay, so frequent polling brings nothing new." }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_quarter": { "name": "Last 15 minutes" },
+      "last_hour": { "name": "Last hour" },
+      "today": { "name": "Today" },
+      "total": { "name": "Total" },
+      "last_data": { "name": "Latest reading" }
+    }
+  },
+  "services": {
+    "import_csv": {
+      "name": "Import CSV",
+      "description": "Import a CSV exported from the ewz portal (semicolon separated) into the stored series and the Energy statistics.",
+      "fields": {
+        "path": { "name": "Path", "description": "File inside the Home Assistant config folder." },
+        "line": { "name": "Line", "description": "Portal name of the line, if the CSV header does not say." }
+      }
+    },
+    "backfill": {
+      "name": "Backfill",
+      "description": "Fetch the last days from the portal again and rebuild the statistics.",
+      "fields": { "days": { "name": "Days", "description": "How many days to fetch." } }
+    }
+  }
+}

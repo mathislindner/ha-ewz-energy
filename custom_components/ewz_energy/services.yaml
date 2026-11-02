@@ -1,0 +1,22 @@
+import_csv:
+  fields:
+    path:
+      required: true
+      example: /config/ewz_usage.csv
+      selector:
+        text:
+    line:
+      required: false
+      example: Wirk Abgabe
+      selector:
+        text:
+backfill:
+  fields:
+    days:
+      required: false
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 800
+          mode: box
