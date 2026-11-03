@@ -79,13 +79,16 @@ def test_parse_mp_tree():
     from tests.fake_portal import SIDEBAR
 
     lines = parse_mp_tree(SIDEBAR)
-    assert len(lines) == 1 and lines[0].kind == "return" and lines[0].line_id == "42"
+    assert len(lines) == 1 and lines[0].kind == "consumption" and lines[0].line_id == "42"
     assert parse_mp_tree({"weird": 1}) == []
 
 
 def test_kind_from_name_when_obis_missing():
     from custom_components.ewz_energy.api import MeasuringLine
 
-    assert MeasuringLine("m", "1", "Wirk Abgabe", None).kind == "return"
+    assert MeasuringLine("m", "1", "Wirk Abgabe", None).kind == "unknown"  # ambiguous word
+    assert MeasuringLine("m", "1", "Wirk Einspeisung", None).kind == "return"
+    assert MeasuringLine("m", "1", "Wirk Abgabe", "OBIS 1-1:1.29.0*255 (kWh)").kind == "consumption"
+    assert MeasuringLine("m", "1", "x", "OBIS 1-1:2.29.0*255 (kWh)").kind == "return"
     assert MeasuringLine("m", "1", "Wirk Bezug", None).kind == "consumption"
     assert MeasuringLine("m", "1", "Blindenergie", None).kind == "unknown"

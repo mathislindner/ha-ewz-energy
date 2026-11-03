@@ -67,10 +67,10 @@ async def test_setup_sensors_and_statistics(recorder_mock: Recorder, hass: HomeA
     await async_wait_recording_done(hass)
     stats = await hass.async_add_executor_job(
         lambda: statistics_during_period(
-            hass, dt_util.utcnow() - timedelta(days=30), None, {"ewz_energy:return"}, "hour", None, {"sum", "state"}
+            hass, dt_util.utcnow() - timedelta(days=30), None, {"ewz_energy:consumption"}, "hour", None, {"sum", "state"}
         )
     )
-    rows = stats["ewz_energy:return"]
+    rows = stats["ewz_energy:consumption"]
     assert rows, "hourly statistics were imported"
     sums = [r["sum"] for r in rows]
     assert sums == sorted(sums), "cumulative sum never decreases"
@@ -143,10 +143,10 @@ async def test_import_csv_service(recorder_mock: Recorder, hass: HomeAssistant, 
     await async_wait_recording_done(hass)
     stats = await hass.async_add_executor_job(
         lambda: statistics_during_period(
-            hass, datetime(2025, 12, 31, tzinfo=timezone.utc), datetime(2026, 1, 2, tzinfo=timezone.utc), {"ewz_energy:return"}, "hour", None, {"sum"}
+            hass, datetime(2025, 12, 31, tzinfo=timezone.utc), datetime(2026, 1, 2, tzinfo=timezone.utc), {"ewz_energy:consumption"}, "hour", None, {"sum"}
         )
     )
-    assert [round(r["sum"], 3) for r in stats["ewz_energy:return"]] == [2.0]
+    assert [round(r["sum"], 3) for r in stats["ewz_energy:consumption"]] == [2.0]
 
 
 async def test_import_csv_outside_allowed_dir_is_refused(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base, tmp_path):
@@ -175,7 +175,7 @@ async def test_config_flow_ok_and_errors(recorder_mock: Recorder, hass: HomeAssi
 async def test_options_interval(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
     entry = await _setup(hass, portal)
     res = await hass.config_entries.options.async_init(entry.entry_id)
-    res = await hass.config_entries.options.async_configure(res["flow_id"], {"scan_interval": 180})
+    res = await hass.config_entries.options.async_configure(res["flow_id"], {"refresh_hour": 3})
     await hass.async_block_till_done()
-    assert entry.options["scan_interval"] == 180
-    assert entry.runtime_data.update_interval == timedelta(minutes=180)
+    assert entry.options["refresh_hour"] == 3
+    assert entry.runtime_data.refresh_hour == 3 and entry.runtime_data.update_interval is None

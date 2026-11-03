@@ -27,8 +27,8 @@
     "step": {
       "init": {
         "title": "ewz Energy options",
-        "data": { "scan_interval": "Refresh every (minutes)" },
-        "data_description": { "scan_interval": "The portal publishes values with about a day of delay, so frequent polling brings nothing new." }
+        "data": { "refresh_hour": "Daily refresh hour (0-23, local time)" },
+        "data_description": { "refresh_hour": "The portal publishes the previous day after midnight, so the integration asks once a day (default 01:00)." }
       }
     }
   },

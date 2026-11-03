@@ -33,10 +33,10 @@
       "init": {
         "title": "ewz Energy Optionen",
         "data": {
-          "scan_interval": "Aktualisierung alle (Minuten)"
+          "refresh_hour": "Tägliche Aktualisierung um (Stunde 0-23)"
         },
         "data_description": {
-          "scan_interval": "Das Portal veröffentlicht Werte mit etwa einem Tag Verzögerung, häufiges Abfragen bringt nichts Neues."
+          "refresh_hour": "Das Portal veröffentlicht den Vortag nach Mitternacht, daher wird einmal täglich abgefragt (Standard 01:00)."
         }
       }
     }

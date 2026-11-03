@@ -6,8 +6,8 @@ browser does and reads the same JSON the portal's table view uses. No headless b
 
 ## What you get
 
-For every load-profile line of your account (for example *Wirk Abgabe* = energy fed into the grid,
-or *Wirk Bezug* = energy drawn from the grid):
+For every load-profile line of your account (for example *Wirk Abgabe*, OBIS 1.29.0 = energy delivered
+to you, i.e. your consumption; the integration classifies lines by their OBIS code):
 
 | Entity | Meaning |
 | --- | --- |
@@ -22,10 +22,10 @@ hourly timestamps, so the **Energy dashboard** shows the right hours. Pick those
 
 ## Important: the data is about a day old
 
-The portal publishes a day's values after the day is over. Polling every 15 minutes or every hour
-brings nothing new, so the default refresh is **hourly** and every refresh re-reads the last 3 days
-and overwrites them (late or corrected values replace old ones). You can change the interval in the
-integration options (15 min to 24 h). The last four quarters sensor therefore shows the last
+The portal publishes a day's values after the day is over. Polling more often
+brings nothing new, so the integration refreshes **once a day at 01:00** (local time, changeable in
+the options) and every refresh re-reads the last 3 days and overwrites them (late or corrected
+values replace old ones). The last four quarters sensor therefore shows the last
 published quarters, not "right now".
 
 ## Install

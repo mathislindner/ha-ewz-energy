@@ -68,10 +68,11 @@ class MeasuringLine:
                 return "consumption"
             if "2.29.0" in self.obis or "2.8.0" in self.obis:
                 return "return"
-        # The sidebar does not carry the OBIS code; fall back to the German line name.
-        # "Wirk Abgabe" = active energy delivered to the grid (feed-in), "Wirk Bezug" = drawn from the grid.
+        # No OBIS code: use the German line name, but only for unambiguous words.
+        # (ewz calls the line "Wirk Abgabe" although its OBIS 1.29.0 is energy delivered TO the
+        # customer = consumption, so "abgabe" alone must not be read as feed-in.)
         name = self.name.lower()
-        if "abgabe" in name or "einspeis" in name:
+        if "einspeis" in name:
             return "return"
         if "bezug" in name or "verbrauch" in name:
             return "consumption"
@@ -127,7 +128,8 @@ def parse_mp_tree(tree: Any) -> list[MeasuringLine]:
             for ln in mp.get("childs", []):
                 if ln.get("type") != "line":
                     continue
-                mq = (ln.get("details") or {}).get("mq")
+                details = ln.get("details") or {}
+                mq = details.get("measured quantity") or details.get("mq")
                 lines.append(
                     MeasuringLine(
                         mp_id=str(mp["id"]),
@@ -221,8 +223,19 @@ class EwzClient:
         raise EwzApiError("unreachable")  # pragma: no cover
 
     async def get_lines(self) -> list[MeasuringLine]:
-        """Return all measuring lines of the account."""
-        return parse_mp_tree(await self._get_json(f"{self._base}/privat/sidebarMultiMp/rlm"))
+        """Return all measuring lines of the account.
+
+        An empty tree is retried once with a fresh login: the portal sometimes answers an
+        otherwise valid session with an empty list.
+        """
+        url = f"{self._base}/privat/sidebarMultiMp/rlm"
+        lines = parse_mp_tree(await self._get_json(url))
+        if not lines:
+            _LOGGER.debug("Sidebar was empty, logging in again and retrying once")
+            self._logged_in = False
+            await asyncio.sleep(2)
+            lines = parse_mp_tree(await self._get_json(url))
+        return lines
 
     async def get_intervals(self, line: MeasuringLine, start: datetime, end: datetime) -> list[Interval]:
         """Return the 15 minute values of ``line`` between two datetimes."""

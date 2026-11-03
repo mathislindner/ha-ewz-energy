@@ -8,10 +8,8 @@ DOMAIN = "ewz_energy"
 
 BASE_URL = "https://energie.ewz.ch"
 
-CONF_SCAN_INTERVAL = "scan_interval"
-DEFAULT_SCAN_INTERVAL = 60  # minutes
-MIN_SCAN_INTERVAL = 15
-MAX_SCAN_INTERVAL = 24 * 60
+CONF_REFRESH_HOUR = "refresh_hour"
+DEFAULT_REFRESH_HOUR = 1  # local time: the portal has the previous day by then
 
 # The portal publishes the previous day with a delay, so every refresh re-reads
 # the last few days and overwrites them (late or corrected values replace old ones).
@@ -23,6 +21,7 @@ BACKFILL_CHUNK_DAYS = 14
 REQUEST_TIMEOUT = 180
 
 STORAGE_VERSION = 1
+STATS_LAYOUT = 2  # 2: statistic ids follow the OBIS code (1.29.0 = consumption)
 QUARTER = 900
 HOUR = 3600
 

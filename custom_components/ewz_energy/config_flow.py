@@ -17,11 +17,9 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .api import EwzApiError, EwzAuthError, EwzClient, EwzConnectionError
 from .const import (
     BASE_URL,
-    CONF_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
+    CONF_REFRESH_HOUR,
+    DEFAULT_REFRESH_HOUR,
     DOMAIN,
-    MAX_SCAN_INTERVAL,
-    MIN_SCAN_INTERVAL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -98,18 +96,18 @@ class EwzConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class EwzOptionsFlow(OptionsFlow):
-    """Options: how often to ask the portal."""
+    """Options: at which hour (local time) to ask the portal once a day."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
-        current = self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        current = self.config_entry.options.get(CONF_REFRESH_HOUR, DEFAULT_REFRESH_HOUR)
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_SCAN_INTERVAL, default=current): vol.All(
-                        vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL)
+                    vol.Required(CONF_REFRESH_HOUR, default=current): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=23)
                     )
                 }
             ),

@@ -22,7 +22,7 @@ SIDEBAR = [
                 "id": "ISU_1",
                 "name": "TEST_METER",
                 "childs": [
-                    {"type": "line", "id": "42", "name": "Wirk Abgabe", "details": {"mq": "OBIS 1-1:2.29.0*255 (kWh)"}}
+                    {"type": "line", "id": "42", "name": "Wirk Abgabe", "details": {"measured quantity": "OBIS 1-1:1.29.0*255 (kWh)"}}
                 ],
             }
         ],
