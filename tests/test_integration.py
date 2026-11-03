@@ -175,7 +175,20 @@ async def test_config_flow_ok_and_errors(recorder_mock: Recorder, hass: HomeAssi
 async def test_options_interval(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
     entry = await _setup(hass, portal)
     res = await hass.config_entries.options.async_init(entry.entry_id)
-    res = await hass.config_entries.options.async_configure(res["flow_id"], {"refresh_hour": 3})
+    res = await hass.config_entries.options.async_configure(res["flow_id"], {"refresh_hour": 3, "price": 0.3})
     await hass.async_block_till_done()
     assert entry.options["refresh_hour"] == 3
     assert entry.runtime_data.refresh_hour == 3 and entry.runtime_data.update_interval is None
+
+
+async def test_cost_statistic(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
+    await _setup(hass, portal)
+    await async_wait_recording_done(hass)
+    stats = await hass.async_add_executor_job(
+        lambda: statistics_during_period(
+            hass, dt_util.utcnow() - timedelta(days=30), None,
+            {"ewz_energy:consumption", "ewz_energy:consumption_cost"}, "hour", None, {"sum"},
+        )
+    )
+    e, c = stats["ewz_energy:consumption"][-1]["sum"], stats["ewz_energy:consumption_cost"][-1]["sum"]
+    assert e > 0 and abs(c - e * 0.3093) < 1e-6

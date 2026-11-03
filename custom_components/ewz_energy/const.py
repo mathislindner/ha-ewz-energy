@@ -9,6 +9,8 @@ DOMAIN = "ewz_energy"
 BASE_URL = "https://energie.ewz.ch"
 
 CONF_REFRESH_HOUR = "refresh_hour"
+CONF_PRICE = "price"
+DEFAULT_PRICE = 0.3093  # CHF/kWh incl. VAT; ElCom 2026 H1 standard for Zuerich, an estimate
 DEFAULT_REFRESH_HOUR = 1  # local time: the portal has the previous day by then
 
 # The portal publishes the previous day with a delay, so every refresh re-reads

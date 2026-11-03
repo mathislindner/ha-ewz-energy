@@ -33,9 +33,11 @@
       "init": {
         "title": "ewz Energy Optionen",
         "data": {
+          "price": "Preis (CHF/kWh inkl. MwSt.)",
           "refresh_hour": "Tägliche Aktualisierung um (Stunde 0-23)"
         },
         "data_description": {
+          "price": "Für die Kostenstatistik ewz_energy:consumption_cost im Energie-Dashboard.",
           "refresh_hour": "Das Portal veröffentlicht den Vortag nach Mitternacht, daher wird einmal täglich abgefragt (Standard 01:00)."
         }
       }

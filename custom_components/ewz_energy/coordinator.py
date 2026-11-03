@@ -21,7 +21,9 @@ from homeassistant.util import dt as dt_util
 from .api import EwzApiError, EwzAuthError, EwzClient, EwzConnectionError, MeasuringLine
 from .const import (
     BACKFILL_CHUNK_DAYS,
+    CONF_PRICE,
     CONF_REFRESH_HOUR,
+    DEFAULT_PRICE,
     DEFAULT_REFRESH_HOUR,
     DOMAIN,
     INITIAL_DAYS,
@@ -65,6 +67,7 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
         # No fixed interval: the portal has the previous day only after midnight, so ask once a
         # day at ``refresh_hour`` (default 01:00 local time).
         super().__init__(hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=None)
+        self.price = float(entry.options.get(CONF_PRICE, DEFAULT_PRICE))
         self.refresh_hour = int(entry.options.get(CONF_REFRESH_HOUR, DEFAULT_REFRESH_HOUR))
         entry.async_on_unload(
             async_track_time_change(hass, self._scheduled_refresh, hour=self.refresh_hour, minute=0, second=0)
@@ -73,7 +76,7 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
         self._store: Store[dict] = Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
         self._lines: dict[str, LineState] = {}
         self._loaded = False
-        self._rebuild_stats = False
+        self._rebuild_stats = True  # also reprices the cost statistic after a price change
 
     async def _scheduled_refresh(self, _now: datetime) -> None:
         await self.async_request_refresh()
@@ -95,7 +98,7 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
         # statistic and rebuild everything from the stored series.
         if saved.get("stats_layout", 1) < STATS_LAYOUT:
             current = {ls.statistic_id for ls in self._lines.values()}
-            stale = [f"{DOMAIN}:return", f"{DOMAIN}:consumption"]
+            stale = [f"{DOMAIN}:return", f"{DOMAIN}:consumption"]  # (only ids not produced now are cleared)
             if any(s not in current for s in stale):
                 get_instance(self.hass).async_clear_statistics([s for s in stale if s not in current])
             self._rebuild_stats = True
@@ -169,6 +172,16 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
             "unit_of_measurement": "kWh",
         }
         async_add_external_statistics(self.hass, metadata, rows)  # type: ignore[arg-type]
+        if state.line.kind == "consumption":
+            # The Energy dashboard cannot price an external statistic with a fixed price, so
+            # publish the cost as its own cumulative statistic (select it as "cost" there).
+            cost_rows = [{**r, "state": r["state"] * self.price, "sum": r["sum"] * self.price} for r in rows]
+            async_add_external_statistics(
+                self.hass,
+                {**metadata, "name": f"ewz {state.line.name} cost", "statistic_id": f"{state.statistic_id}_cost",
+                 "unit_class": None, "unit_of_measurement": "CHF"},
+                cost_rows,  # type: ignore[arg-type]
+            )
 
     # ---- services ------------------------------------------------------
     async def async_import_rows(self, line_id: str, rows: list[tuple[int, float, str]]) -> int:

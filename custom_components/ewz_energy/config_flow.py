@@ -17,7 +17,9 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .api import EwzApiError, EwzAuthError, EwzClient, EwzConnectionError
 from .const import (
     BASE_URL,
+    CONF_PRICE,
     CONF_REFRESH_HOUR,
+    DEFAULT_PRICE,
     DEFAULT_REFRESH_HOUR,
     DOMAIN,
 )
@@ -108,7 +110,10 @@ class EwzOptionsFlow(OptionsFlow):
                 {
                     vol.Required(CONF_REFRESH_HOUR, default=current): vol.All(
                         vol.Coerce(int), vol.Range(min=0, max=23)
-                    )
+                    ),
+                    vol.Required(CONF_PRICE, default=self.config_entry.options.get(CONF_PRICE, DEFAULT_PRICE)): vol.All(
+                        vol.Coerce(float), vol.Range(min=0, max=5)
+                    ),
                 }
             ),
         )
