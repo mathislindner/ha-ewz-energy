@@ -181,8 +181,7 @@ async def test_options_interval(recorder_mock: Recorder, hass: HomeAssistant, en
     assert entry.runtime_data.refresh_hour == 3 and entry.runtime_data.update_interval is None
 
 
-async def test_cost_statistic(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
-    await _setup(hass, portal)
+async def _last_sums(hass) -> tuple[float, float]:
     await async_wait_recording_done(hass)
     stats = await hass.async_add_executor_job(
         lambda: statistics_during_period(
@@ -190,5 +189,39 @@ async def test_cost_statistic(recorder_mock: Recorder, hass: HomeAssistant, enab
             {"ewz_energy:consumption", "ewz_energy:consumption_cost"}, "hour", None, {"sum"},
         )
     )
-    e, c = stats["ewz_energy:consumption"][-1]["sum"], stats["ewz_energy:consumption_cost"][-1]["sum"]
+    return stats["ewz_energy:consumption"][-1]["sum"], stats["ewz_energy:consumption_cost"][-1]["sum"]
+
+
+async def test_cost_statistic(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
+    await _setup(hass, portal)
+    e, c = await _last_sums(hass)
     assert e > 0 and abs(c - e * 0.3093) < 1e-6
+
+
+async def _set_options(hass, entry, options: dict) -> dict:
+    res = await hass.config_entries.options.async_init(entry.entry_id)
+    res = await hass.config_entries.options.async_configure(res["flow_id"], options)
+    assert res["type"] == "create_entry"
+    await hass.async_block_till_done()
+    return res
+
+
+async def test_time_of_use_reprices_cost_and_back(recorder_mock: Recorder, hass: HomeAssistant, enable_custom_integrations, portal, patch_base):
+    entry = await _setup(hass, portal)
+    await _set_options(hass, entry, {"refresh_hour": 1, "price": 0.3, "time_of_use": True, "price_low": 0.2})
+    assert entry.options == {"refresh_hour": 1, "price": 0.3, "time_of_use": True, "price_low": 0.2}
+    energy, cost = await _last_sums(hass)
+    # Independent of the code under test: price every stored quarter by its local start time.
+    zurich = ZoneInfo("Europe/Zurich")
+    expected = 0.0
+    for end, (kwh, _state) in portal.values.items():
+        local = (end - timedelta(minutes=15)).astimezone(zurich)
+        expected += kwh * (0.3 if local.weekday() < 6 and 6 <= local.hour < 22 else 0.2)
+    assert abs(energy - sum(v for v, _s in portal.values.values())) < 1e-6
+    assert abs(cost - expected) < 1e-6
+
+    # Switching back re-prices everything flat and keeps the low price for next time.
+    await _set_options(hass, entry, {"refresh_hour": 1, "price": 0.25, "time_of_use": False, "price_low": 0.2})
+    assert entry.options["price_low"] == 0.2 and entry.options["time_of_use"] is False
+    energy, cost = await _last_sums(hass)
+    assert abs(cost - energy * 0.25) < 1e-6

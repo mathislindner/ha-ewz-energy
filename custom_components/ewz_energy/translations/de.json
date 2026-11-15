@@ -33,12 +33,16 @@
       "init": {
         "title": "ewz Energy Optionen",
         "data": {
-          "price": "Preis (CHF/kWh inkl. MwSt.)",
-          "refresh_hour": "Tägliche Aktualisierung um (Stunde 0-23)"
+          "price": "Preis (CHF/kWh inkl. MwSt.); mit Hoch-/Niedertarif der Hochtarif",
+          "refresh_hour": "Tägliche Aktualisierung um (Stunde 0-23)",
+          "time_of_use": "Hoch-/Niedertarif",
+          "price_low": "Niedertarifpreis (CHF/kWh inkl. MwSt.)"
         },
         "data_description": {
-          "price": "Für die Kostenstatistik ewz_energy:consumption_cost im Energie-Dashboard.",
-          "refresh_hour": "Das Portal veröffentlicht den Vortag nach Mitternacht, daher wird einmal täglich abgefragt (Standard 01:00)."
+          "price": "Für die Kostenstatistik ewz_energy:consumption_cost im Energie-Dashboard. Eine Preisänderung bewertet alle gespeicherten Daten neu.",
+          "refresh_hour": "Das Portal veröffentlicht den Vortag nach Mitternacht, daher wird einmal täglich abgefragt (Standard 01:00).",
+          "time_of_use": "Jede Stunde nach den ewz-Tarifzeiten bepreisen: der Preis oben im Hochtarif (Montag bis Samstag 06.00-22.00 Uhr), der Niedertarifpreis in allen übrigen Stunden.",
+          "price_low": "Nur mit Hoch-/Niedertarif. Wie auf Ihrem ewz-Tarif (Energie, Netz und Abgaben; ohne die feste monatliche Messgebühr)."
         }
       }
     }
