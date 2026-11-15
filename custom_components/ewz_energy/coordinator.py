@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.recorder.models import StatisticMeanType
 from homeassistant.components.recorder import get_instance
@@ -22,8 +23,11 @@ from .api import EwzApiError, EwzAuthError, EwzClient, EwzConnectionError, Measu
 from .const import (
     BACKFILL_CHUNK_DAYS,
     CONF_PRICE,
+    CONF_PRICE_LOW,
     CONF_REFRESH_HOUR,
+    CONF_TIME_OF_USE,
     DEFAULT_PRICE,
+    DEFAULT_PRICE_LOW,
     DEFAULT_REFRESH_HOUR,
     DOMAIN,
     INITIAL_DAYS,
@@ -32,7 +36,7 @@ from .const import (
     STATS_LAYOUT,
     STORAGE_VERSION,
 )
-from .series import Series, day_bounds, hourly_statistics
+from .series import Series, Tariff, day_bounds, hourly_statistics
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,6 +51,14 @@ class LineState:
     line: MeasuringLine
     statistic_id: str
     series: Series
+
+
+def tariff_from_options(options: Mapping[str, Any]) -> Tariff:
+    """``price`` for every hour, or as the high tariff next to ``price_low`` when time of use is on."""
+    price = float(options.get(CONF_PRICE, DEFAULT_PRICE))
+    if options.get(CONF_TIME_OF_USE):
+        return Tariff(price, float(options.get(CONF_PRICE_LOW, DEFAULT_PRICE_LOW)))
+    return Tariff(price)
 
 
 def _slug(line: MeasuringLine, taken: set[str]) -> str:
@@ -67,7 +79,7 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
         # No fixed interval: the portal has the previous day only after midnight, so ask once a
         # day at ``refresh_hour`` (default 01:00 local time).
         super().__init__(hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=None)
-        self.price = float(entry.options.get(CONF_PRICE, DEFAULT_PRICE))
+        self.tariff = tariff_from_options(entry.options)
         self.refresh_hour = int(entry.options.get(CONF_REFRESH_HOUR, DEFAULT_REFRESH_HOUR))
         entry.async_on_unload(
             async_track_time_change(hass, self._scheduled_refresh, hour=self.refresh_hour, minute=0, second=0)
@@ -175,7 +187,7 @@ class EwzCoordinator(DataUpdateCoordinator[dict[str, LineState]]):
         if state.line.kind == "consumption":
             # The Energy dashboard cannot price an external statistic with a fixed price, so
             # publish the cost as its own cumulative statistic (select it as "cost" there).
-            cost_rows = [{**r, "state": r["state"] * self.price, "sum": r["sum"] * self.price} for r in rows]
+            cost_rows = hourly_statistics(state.series, from_end, self.tariff)
             async_add_external_statistics(
                 self.hass,
                 {**metadata, "name": f"ewz {state.line.name} cost", "statistic_id": f"{state.statistic_id}_cost",

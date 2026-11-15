@@ -27,8 +27,8 @@
     "step": {
       "init": {
         "title": "ewz Energy options",
-        "data": { "price": "Price (CHF/kWh incl. VAT)", "refresh_hour": "Daily refresh hour (0-23, local time)" },
-        "data_description": { "price": "Used for the cost statistic ewz_energy:consumption_cost shown in the Energy dashboard.", "refresh_hour": "The portal publishes the previous day after midnight, so the integration asks once a day (default 01:00)." }
+        "data": { "price": "Price (CHF/kWh incl. VAT); the high tariff with high/low tariff on", "refresh_hour": "Daily refresh hour (0-23, local time)", "time_of_use": "High/low tariff", "price_low": "Low-tariff price (CHF/kWh incl. VAT)" },
+        "data_description": { "price": "Used for the cost statistic ewz_energy:consumption_cost shown in the Energy dashboard. Changing a price re-prices all stored data.", "refresh_hour": "The portal publishes the previous day after midnight, so the integration asks once a day (default 01:00).", "time_of_use": "Price each hour by the ewz tariff time: the price above for the high tariff (Monday to Saturday 06:00-22:00), the low-tariff price for all other hours.", "price_low": "Only used with the high/low tariff. As on your ewz tariff (energy, grid and levies; without the fixed monthly metering fee)." }
       }
     }
   },

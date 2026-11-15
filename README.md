@@ -28,6 +28,28 @@ the options) and every refresh re-reads the last 3 days and overwrites them (lat
 values replace old ones). The last four quarters sensor therefore shows the last
 published quarters, not "right now".
 
+## Cost
+
+The consumption line also gets a cumulative **cost statistic** `ewz_energy:consumption_cost` (CHF).
+In the Energy dashboard, pick it as the consumption's "entity tracking the total costs". Set the price
+in the options (CHF/kWh incl. VAT; default 0.3093, the ElCom 2026 estimate for Zurich).
+
+ewz charges a **high tariff** Monday to Saturday 06:00-22:00 and a **low tariff** at all other hours.
+The portal's load profile (OBIS 1.29.0) has no tariff split, so the integration can price each hour by
+its local time instead: turn on *High/low tariff* in the options. *Price* is then the high tariff and
+*Low-tariff price* applies to all other hours. For example, ewz.natur 2026 for private customers in the city
+of Zurich (energy, grid and levies):
+
+| 2026 | Rp/kWh excl. VAT | CHF/kWh incl. 8.1 % VAT |
+| --- | --- | --- |
+| High tariff | 26.25 | 0.2838 |
+| Low tariff | 15.90 | 0.1719 |
+
+Other products, Graubünden and the fixed monthly metering fee (not part of the cost statistic) are in
+the [ewz tariff sheet](https://www.ewz.ch/dam/ewz/meinewz/Dokumentencenter/2026/Uebersicht_Tarife_ewz-2026.pdf).
+Changing a price or switching the tariff re-prices **all** stored data, including earlier years, at
+today's prices.
+
 ## Install
 
 HACS: add this repository as a custom repository (category *Integration*), install, restart.

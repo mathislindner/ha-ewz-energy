@@ -18,8 +18,11 @@ from .api import EwzApiError, EwzAuthError, EwzClient, EwzConnectionError
 from .const import (
     BASE_URL,
     CONF_PRICE,
+    CONF_PRICE_LOW,
     CONF_REFRESH_HOUR,
+    CONF_TIME_OF_USE,
     DEFAULT_PRICE,
+    DEFAULT_PRICE_LOW,
     DEFAULT_REFRESH_HOUR,
     DOMAIN,
 )
@@ -97,23 +100,26 @@ class EwzConfigFlow(ConfigFlow, domain=DOMAIN):
         return EwzOptionsFlow()
 
 
+PRICE = vol.All(vol.Coerce(float), vol.Range(min=0, max=5))
+
+
 class EwzOptionsFlow(OptionsFlow):
-    """Options: at which hour (local time) to ask the portal once a day."""
+    """Options: the daily refresh hour and the price(s) for the cost statistic."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
-        current = self.config_entry.options.get(CONF_REFRESH_HOUR, DEFAULT_REFRESH_HOUR)
+        current = self.config_entry.options
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_REFRESH_HOUR, default=current): vol.All(
+                    vol.Required(CONF_REFRESH_HOUR, default=current.get(CONF_REFRESH_HOUR, DEFAULT_REFRESH_HOUR)): vol.All(
                         vol.Coerce(int), vol.Range(min=0, max=23)
                     ),
-                    vol.Required(CONF_PRICE, default=self.config_entry.options.get(CONF_PRICE, DEFAULT_PRICE)): vol.All(
-                        vol.Coerce(float), vol.Range(min=0, max=5)
-                    ),
+                    vol.Required(CONF_PRICE, default=current.get(CONF_PRICE, DEFAULT_PRICE)): PRICE,
+                    vol.Required(CONF_TIME_OF_USE, default=current.get(CONF_TIME_OF_USE, False)): bool,
+                    vol.Required(CONF_PRICE_LOW, default=current.get(CONF_PRICE_LOW, DEFAULT_PRICE_LOW)): PRICE,
                 }
             ),
         )

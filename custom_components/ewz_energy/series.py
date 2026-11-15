@@ -14,7 +14,7 @@ from io import StringIO
 from typing import Iterable
 from zoneinfo import ZoneInfo
 
-from .const import HOUR, QUARTER, VALID_STATES
+from .const import HIGH_TARIFF_DAYS, HIGH_TARIFF_HOURS, HOUR, QUARTER, VALID_STATES
 
 PORTAL_TZ = ZoneInfo("Europe/Zurich")
 
@@ -60,12 +60,39 @@ class Series:
         return [(t, *self.data[t]) for t in sorted(self.data)[-count:]]
 
 
-def hourly_statistics(series: Series, from_end: int | None = None) -> list[dict]:
+@dataclass(frozen=True, slots=True)
+class Tariff:
+    """Price per kWh: one flat price, or the ewz high/low tariff by local time.
+
+    ewz bills the smart-meter load profile (OBIS 1.29.0, no tariff registers) by the time of
+    each interval: high tariff Monday to Saturday 06:00-22:00 Zurich time, low tariff otherwise.
+    The window starts and ends on full hours, so pricing a whole hour at once is exact.
+    """
+
+    price: float  # the flat price, or the high-tariff price when ``low_price`` is set
+    low_price: float | None = None
+
+    def is_high(self, start: int) -> bool:
+        """Return whether the hour or quarter starting at ``start`` (UTC epoch) is high tariff."""
+        local = datetime.fromtimestamp(start, PORTAL_TZ)
+        return local.weekday() in HIGH_TARIFF_DAYS and local.hour in HIGH_TARIFF_HOURS
+
+    def price_at(self, start: int) -> float:
+        """Return the price (CHF/kWh) of energy used in the hour or quarter starting at ``start``."""
+        if self.low_price is None or self.is_high(start):
+            return self.price
+        return self.low_price
+
+
+def hourly_statistics(series: Series, from_end: int | None = None, tariff: Tariff | None = None) -> list[dict]:
     """Build cumulative hourly statistics rows (``start``, ``state``, ``sum``).
 
     The running sum always starts at the first stored value, so the result is
     identical whatever ``from_end`` is; ``from_end`` only limits what is returned
     (everything from the hour containing that value on).
+
+    Without ``tariff`` the rows are energy (kWh); with it, each hour is priced by
+    :meth:`Tariff.price_at` and the rows are cost (CHF).
     """
     if not series.data:
         return []
@@ -83,7 +110,8 @@ def hourly_statistics(series: Series, from_end: int | None = None) -> list[dict]
         # An hour that is still filling up is not emitted yet; permanent gaps in older hours are.
         if len(quarters) < 4 and hour == last_hour:
             continue
-        total += sum(quarters)
+        amount = sum(quarters)
+        total += amount if tariff is None else amount * tariff.price_at(hour)
         if first_wanted is None or hour >= first_wanted:
             rows.append(
                 {
